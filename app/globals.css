@@ -1088,45 +1088,32 @@ body {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   }
 
-  /* padding and gap are handled by variables in the main rule now, 
-       but we need to ensure the main rule uses them. 
-       Wait, the main rule uses `padding: var(--tab-padding-y) var(--tab-padding-x);` 
-       and `gap: var(--tab-gap);`.
-       So setting the variables here IS enough if inheritance works or if I set them on .tab-nav itself. */
+  /* Active indicator scaling for mobile width */
+  .tab-nav::after {
+    /* Indicator logic handles relative width, handled by JS/CSS calculation */
+    /* Only need to ensure height matches new taller bar */
+    height: calc(100% - 8px);
+    top: 4px;
+    border-radius: 28px;
+    /* Circular pill ends */
+  }
 
-  /* Stronger glass for fixed element */
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  .tab-item {
+    flex: 1;
+    height: 100%;
+    padding: 0;
+    justify-content: center;
+    border-radius: 99px;
+  }
 
-  /* Safe area margin adjustment */
-  margin-bottom: env(safe-area-inset-bottom);
-}
+  .tab-item__label {
+    display: none;
+  }
 
-/* Active indicator scaling for mobile width */
-.tab-nav::after {
-  /* Indicator logic handles relative width, handled by JS/CSS calculation */
-  /* Only need to ensure height matches new taller bar */
-  height: calc(100% - 8px);
-  top: 4px;
-  border-radius: 28px;
-  /* Circular pill ends */
-}
-
-.tab-item {
-  flex: 1;
-  height: 100%;
-  padding: 0;
-  justify-content: center;
-  border-radius: 99px;
-}
-
-.tab-item__label {
-  display: none;
-}
-
-.tab-item__icon {
-  width: 24px;
-  height: 24px;
-}
+  .tab-item__icon {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 @media (min-width: 768px) {
