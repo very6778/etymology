@@ -7,10 +7,35 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { UnifiedEtymologyCard } from "@/components/UnifiedEtymologyCard";
 import { getWordData } from "@/lib/mockData";
 
-interface NisanyanData {
+interface NisanyanLanguage {
+    name: string;
+    abbreviation: string;
+    description?: string;
+}
+
+interface NisanyanRelation {
+    name: string;
+    abbreviation: string;
+    text: string;
+}
+
+interface NisanyanEtymology {
+    languages: NisanyanLanguage[];
+    originalText: string;
+    romanizedText: string;
+    definition: string;
+    relation: NisanyanRelation;
+    paranthesis?: string;
+}
+
+interface NisanyanWord {
+    etymologies: NisanyanEtymology[];
     note?: string;
-    meaning?: string;
-    origin?: string;
+    relatedWords?: string[];
+}
+
+interface NisanyanData {
+    words: NisanyanWord[];
 }
 
 interface TDKData {
@@ -60,13 +85,11 @@ export default function WordPage() {
     // Fetch Nisanyan data
     useEffect(() => {
         if (mockData?.nisanyan) {
-            setNisanyanData({
-                origin: mockData.nisanyan.origin,
-                meaning: mockData.nisanyan.meaning,
-                note: mockData.nisanyan.note,
-            });
+            // Mock data structure might be outdated, but handling it is optional for now 
+            // or we can map it if we really need mock testing.
+            // For now, let's skip mock mapping for Nisanyan or do a minimal map if needed.
             setNisanyanLoading(false);
-            return;
+            // return; // Commented out to force real fetch for this feature upgrade
         }
 
         async function fetchNisanyan() {
@@ -74,13 +97,9 @@ export default function WordPage() {
                 const response = await fetch(`/api/nisanyan?word=${encodeURIComponent(word)}`);
                 if (!response.ok) throw new Error("Not found");
                 const json = await response.json();
-                if (json.success && json.data) {
-                    const data = json.data;
-                    setNisanyanData({
-                        origin: typeof data.origin === 'string' ? data.origin : '',
-                        meaning: typeof data.meaning === 'string' ? data.meaning : '',
-                        note: typeof data.note === 'string' ? data.note : '',
-                    });
+
+                if (json.words && json.words.length > 0) {
+                    setNisanyanData(json);
                 } else {
                     setNisanyanError(true);
                 }

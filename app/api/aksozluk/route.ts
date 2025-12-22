@@ -54,14 +54,20 @@ export async function GET(request: Request) {
         const h1Text = $('h1').first().text().trim();
 
         // Find paragraphs in the article
-        const paragraphs = $('article p').map((_, el) => $(el).text().trim()).get();
+        const paragraphs = $('article p').map((_, el) => $(el).html()?.trim()).get();
 
         // The main etymology content is usually in the paragraphs
         let content = paragraphs.join(' ').trim();
 
-        // Remove date at the beginning (e.g., "10 Mayıs 2020")
+        // Remove date at the beginning (e.g., "10 Mayıs 2020") - handle potential HTML tags before it
         // Turkish month names: Ocak, Şubat, Mart, Nisan, Mayıs, Haziran, Temmuz, Ağustos, Eylül, Ekim, Kasım, Aralık
-        content = content.replace(/^\d{1,2}\s+(Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık)\s+\d{4}\s*/i, '');
+        // The date pattern might be wrapped in tags or preceded by whitespace/tags.
+        content = content.replace(/^(\s*(<[^>]+>\s*)*)\d{1,2}\s+(Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık)\s+\d{4}\s*/i, '$1');
+
+        // Basic clean up: Remove links but keep text, or just keep formatting. 
+        // For now, let's keep simple formatting and strip <a> tags if any, to avoid navigation.
+        // Simple regex to strip <a ...> and </a> but keep content
+        content = content.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
 
         if (!content || content.length < 10) {
             return NextResponse.json({ error: 'No etymology content found' }, { status: 404 });

@@ -6,20 +6,35 @@ import { useSensoryFeedback } from "@/hooks/useSensoryFeedback";
 
 export type SourceType = "nisanyan" | "aksozluk" | "etimolojitr";
 
-interface Etymology {
-    languages: string[];
+interface NisanyanLanguage {
+    name: string;
+    abbreviation: string;
+    description?: string;
+}
+
+interface NisanyanRelation {
+    name: string;
+    abbreviation: string;
+    text: string;
+}
+
+interface NisanyanEtymology {
+    languages: NisanyanLanguage[];
     originalText: string;
     romanizedText: string;
     definition: string;
-    relation: string;
+    relation: NisanyanRelation;
     paranthesis?: string;
 }
 
-interface NisanyanData {
-    origin?: string;
-    meaning?: string;
+interface NisanyanWord {
+    etymologies: NisanyanEtymology[];
     note?: string;
-    etymologies?: Etymology[];
+    relatedWords?: string[];
+}
+
+interface NisanyanData {
+    words: NisanyanWord[];
 }
 
 interface TDKData {
@@ -127,6 +142,69 @@ const formatTextWithParagraphs = (text: string): string[] => {
     return paragraphs.filter(p => p.length > 0);
 };
 
+// HTML-aware paragraph formatting: splits HTML content at sentence boundaries
+// while preserving HTML tags. Works by finding ". " in the text content.
+const formatHtmlWithParagraphs = (html: string): string[] => {
+    if (!html || html.length <= 200) return [html];
+
+    const paragraphs: string[] = [];
+    let remaining = html;
+    let splits = 0;
+    const maxSplits = 2;
+
+    while (remaining.length > 0 && splits < maxSplits) {
+        // Get text-only length to check if we need to split
+        const textOnly = remaining.replace(/<[^>]+>/g, '');
+        if (textOnly.length <= 200) {
+            paragraphs.push(remaining.trim());
+            remaining = '';
+            break;
+        }
+
+        // Find ". " in text content, but we need to find it in original HTML
+        // Strategy: Walk through the HTML, track text position, find the split point
+        let textPos = 0;
+        let splitIndex = -1;
+
+        for (let i = 0; i < remaining.length; i++) {
+            if (remaining[i] === '<') {
+                // Skip HTML tag
+                const tagEnd = remaining.indexOf('>', i);
+                if (tagEnd !== -1) {
+                    i = tagEnd;
+                    continue;
+                }
+            }
+
+            textPos++;
+
+            // Look for ". " after ~150 text chars
+            if (textPos >= 150 && remaining.substring(i, i + 2) === '. ') {
+                splitIndex = i + 1; // Include the period
+                break;
+            }
+
+            // Don't search beyond 350 text chars
+            if (textPos > 350) break;
+        }
+
+        if (splitIndex !== -1) {
+            paragraphs.push(remaining.substring(0, splitIndex).trim());
+            remaining = remaining.substring(splitIndex + 1).trim();
+            splits++;
+        } else {
+            // No suitable split found
+            break;
+        }
+    }
+
+    if (remaining.trim().length > 0) {
+        paragraphs.push(remaining.trim());
+    }
+
+    return paragraphs.filter(p => p.length > 0);
+};
+
 import { useDrag } from "@use-gesture/react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -174,7 +252,7 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
 
     const variants = {
         enter: (direction: number) => ({
-            x: direction > 0 ? 50 : -50,
+            x: direction > 0 ? "100%" : "-100%",
             opacity: 0,
         }),
         center: {
@@ -188,11 +266,8 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
         },
         exit: (direction: number) => ({
             zIndex: 0,
-            x: direction < 0 ? 50 : -50,
+            x: direction < 0 ? "100%" : "-100%",
             opacity: 0,
-            position: "absolute",
-            top: 0,
-            width: "100%",
             transition: {
                 x: { type: "spring", stiffness: 300, damping: 30 },
                 opacity: { duration: 0.2 }
@@ -235,7 +310,7 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
     };
 
     const renderNisanyan = (data: NisanyanData) => {
-        if (!data.origin && !data.note) {
+        if (!data.words || data.words.length === 0) {
             return (
                 <div className="unified-card__error">
                     <span>bu kelime için veri bulunamadı</span>
@@ -243,16 +318,48 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             );
         }
 
+        const wordData = data.words[0];
+        const etymologies = wordData.etymologies || [];
+
+        // Construct the etymology text from structured data
+        let construction = "";
+
+        if (etymologies.length > 0) {
+            etymologies.forEach((etym, index) => {
+                const lang = etym.languages && etym.languages.length > 0 ? etym.languages[0].name : "";
+                const word = etym.romanizedText || etym.originalText || "";
+                const def = etym.definition && etym.definition !== "a.a." ? `"${etym.definition}"` : "";
+                const relation = etym.relation ? etym.relation.text : "";
+
+                // Build sentence part
+                // Example: "Eski Türkçe" + "alma" + "sözcüğünden evrilmiştir."
+                let part = "";
+                if (lang) part += `<span class="etym-lang">${lang}</span> `;
+                if (word) part += `<b>${word}</b> `;
+                if (def) part += `${def} `;
+                if (relation) part += `${relation} `;
+
+                construction += part;
+            });
+        }
+
+        // Basic cleanup of the constructed text
+        const mainText = construction.replace(/\s+/g, " ").trim();
+        const note = wordData.note;
+
         return (
             <div className="tab-content">
                 <div className="etymology-content">
-                    {data.origin && formatTextWithParagraphs(data.origin).map((paragraph, i) => (
-                        <p key={i}>{paragraph}</p>
-                    ))}
-                    {data.note && (
+                    {/* We use a different rendering here because we have HTML tags now, but formatTextWithParagraphs splits by text. 
+                        For now, let's strip tags for valid paragraph splitting or just render safely. 
+                        Actually, let's keep it simple: Render the constructed text as one block or handle it nicely.
+                    */}
+                    <p dangerouslySetInnerHTML={{ __html: mainText }} />
+
+                    {note && (
                         <div className="etymology-note">
                             <div className="etymology-note__label">not</div>
-                            <div className="etymology-note__content">{data.note}</div>
+                            <div className="etymology-note__content">{note}</div>
                         </div>
                     )}
                 </div>
@@ -269,11 +376,13 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             );
         }
 
+        const paragraphs = formatHtmlWithParagraphs(data.content);
+
         return (
             <div className="tab-content">
                 <div className="etymology-content">
-                    {formatTextWithParagraphs(data.content).map((paragraph, i) => (
-                        <p key={i}>{paragraph}</p>
+                    {paragraphs.map((p, i) => (
+                        <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
                     ))}
                 </div>
             </div>
@@ -290,17 +399,20 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
         }
 
         const mainContent = data.origin || data.content || '';
+        const paragraphs = formatHtmlWithParagraphs(mainContent);
 
         return (
             <div className="tab-content">
                 <div className="etymology-content">
-                    {formatTextWithParagraphs(mainContent).map((paragraph, i) => (
-                        <p key={i}>{paragraph}</p>
+                    {paragraphs.map((p, i) => (
+                        <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
                     ))}
                     {data.oldestSource && (
                         <div className="etymology-note">
                             <div className="etymology-note__label">en eski kaynak</div>
-                            <div className="etymology-note__content">{data.oldestSource}</div>
+                            <div className="etymology-note__content">
+                                <span dangerouslySetInnerHTML={{ __html: data.oldestSource }} />
+                            </div>
                         </div>
                     )}
                 </div>
@@ -347,8 +459,13 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             </div>
 
             {/* Body - Content Only */}
-            <div className="unified-card__body" style={{ position: 'relative', overflow: 'hidden' }}>
-                <AnimatePresence initial={false} custom={direction} mode="wait">
+            <motion.div
+                className="unified-card__body"
+                layout
+                style={{ position: 'relative', overflow: 'hidden' }}
+                transition={{ duration: 0.3, type: "spring", stiffness: 200, damping: 25 }}
+            >
+                <AnimatePresence initial={false} custom={direction} mode="popLayout">
                     <motion.div
                         key={activeTab}
                         custom={direction}
@@ -361,7 +478,7 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
                         {renderContent()}
                     </motion.div>
                 </AnimatePresence>
-            </div>
+            </motion.div>
         </div>
     );
 }
