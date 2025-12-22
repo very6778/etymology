@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { BackButton } from "@/components/BackButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UnifiedEtymologyCard } from "@/components/UnifiedEtymologyCard";
-import { AIButton } from "@/components/AIButton";
 import { getWordData } from "@/lib/mockData";
 
 interface NisanyanData {
@@ -226,8 +225,6 @@ export default function WordPage() {
                 <section className="sources-section">
                     <UnifiedEtymologyCard word={word} sources={sources} />
                 </section>
-
-                <AIButton word={word} />
             </div>
         </main>
     );
