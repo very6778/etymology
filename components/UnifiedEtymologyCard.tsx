@@ -128,9 +128,11 @@ const formatTextWithParagraphs = (text: string): string[] => {
 };
 
 import { useDrag } from "@use-gesture/react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProps) {
     const [activeTab, setActiveTab] = useState<SourceType>("aksozluk");
+    const [direction, setDirection] = useState(0);
     const { triggerFeedback } = useSensoryFeedback();
 
     const currentSource = sources[activeTab];
@@ -139,6 +141,9 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
         if (activeTab === source) {
             window.open(sourceConfig[source].url(word), '_blank');
         } else {
+            const newIndex = sourceOrder.indexOf(source);
+            const oldIndex = sourceOrder.indexOf(activeTab);
+            setDirection(newIndex > oldIndex ? 1 : -1);
             triggerFeedback();
             setActiveTab(source);
         }
@@ -152,6 +157,7 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             // Swipe Left -> Next Tab
             if (currentIndex < sourceOrder.length - 1) {
                 const nextSource = sourceOrder[currentIndex + 1];
+                setDirection(1);
                 triggerFeedback();
                 setActiveTab(nextSource);
             }
@@ -159,11 +165,40 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             // Swipe Right -> Previous Tab
             if (currentIndex > 0) {
                 const prevSource = sourceOrder[currentIndex - 1];
+                setDirection(-1);
                 triggerFeedback();
                 setActiveTab(prevSource);
             }
         }
     });
+
+    const variants = {
+        enter: (direction: number) => ({
+            x: direction > 0 ? 50 : -50,
+            opacity: 0,
+        }),
+        center: {
+            zIndex: 1,
+            x: 0,
+            opacity: 1,
+            transition: {
+                x: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 }
+            } as any
+        },
+        exit: (direction: number) => ({
+            zIndex: 0,
+            x: direction < 0 ? 50 : -50,
+            opacity: 0,
+            position: "absolute",
+            top: 0,
+            width: "100%",
+            transition: {
+                x: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 }
+            } as any
+        })
+    };
 
     const renderContent = () => {
         if (currentSource.loading) {
@@ -312,8 +347,20 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             </div>
 
             {/* Body - Content Only */}
-            <div className="unified-card__body">
-                {renderContent()}
+            <div className="unified-card__body" style={{ position: 'relative', overflow: 'hidden' }}>
+                <AnimatePresence initial={false} custom={direction} mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        custom={direction}
+                        variants={variants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        layout // Enables smooth height resizing
+                    >
+                        {renderContent()}
+                    </motion.div>
+                </AnimatePresence>
             </div>
         </div>
     );
