@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { BackButton } from "@/components/BackButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { SourceCard } from "@/components/SourceCard";
+import { UnifiedEtymologyCard } from "@/components/UnifiedEtymologyCard";
 import { AIButton } from "@/components/AIButton";
 import { getWordData } from "@/lib/mockData";
 
@@ -182,6 +182,30 @@ export default function WordPage() {
         fetchEtimolojitr();
     }, [word, mockData]);
 
+    // Prepare sources data for UnifiedEtymologyCard
+    const sources = {
+        nisanyan: {
+            data: nisanyanData,
+            loading: nisanyanLoading,
+            error: nisanyanError,
+        },
+        tdk: {
+            data: tdkData,
+            loading: tdkLoading,
+            error: tdkError,
+        },
+        aksozluk: {
+            data: aksozlukData,
+            loading: aksozlukLoading,
+            error: aksozlukError,
+        },
+        etimolojitr: {
+            data: etimolojitrData,
+            loading: etimolojitrLoading,
+            error: etimolojitrError,
+        },
+    };
+
     return (
         <main className="result-page">
             <BackButton />
@@ -191,94 +215,16 @@ export default function WordPage() {
                 <header className="word-header">
                     <h1 className="word-title">{word}</h1>
                     {tdkLoading ? (
-                        <p className="word-definition text-muted">Yükleniyor...</p>
+                        <p className="word-definition text-muted">yükleniyor...</p>
                     ) : tdkData?.definition ? (
-                        <>
-                            <p className="word-definition text-muted">
-                                {tdkData.definition}
-                            </p>
-                            {tdkData.etymology && (
-                                <p className="word-origin text-subtle" style={{ marginTop: "8px", fontSize: "0.9em" }}>
-                                    Köken: {tdkData.etymology}
-                                </p>
-                            )}
-                        </>
+                        <p className="word-definition text-muted">
+                            {tdkData.definition}
+                        </p>
                     ) : null}
                 </header>
 
                 <section className="sources-section">
-
-                    {/* Nisanyan Card */}
-                    {nisanyanLoading ? (
-                        <div className="source-card source-card--nisanyan">
-                            <div className="source-card__header">
-                                <div className="loading-spinner" />
-                                Nisanyan Sözlük
-                            </div>
-                            <p className="text-muted">Yükleniyor...</p>
-                        </div>
-                    ) : (
-                        <SourceCard source="nisanyan" error={nisanyanError}>
-                            {nisanyanData && (
-                                <>
-                                    {nisanyanData.origin && (
-                                        <p><strong>Köken:</strong> {nisanyanData.origin}</p>
-                                    )}
-                                    {nisanyanData.meaning && (
-                                        <p><strong>Anlam:</strong> {nisanyanData.meaning}</p>
-                                    )}
-                                    {nisanyanData.note && (
-                                        <p className="text-muted" style={{ marginTop: "8px", fontSize: "0.9em" }}>
-                                            {nisanyanData.note}
-                                        </p>
-                                    )}
-                                </>
-                            )}
-                        </SourceCard>
-                    )}
-
-                    {/* Aksözlük Card */}
-                    {aksozlukLoading ? (
-                        <div className="source-card source-card--aksozluk">
-                            <div className="source-card__header">
-                                <div className="loading-spinner" />
-                                Aksözlük
-                            </div>
-                            <p className="text-muted">Yükleniyor...</p>
-                        </div>
-                    ) : (
-                        <SourceCard source="aksozluk" error={aksozlukError}>
-                            {aksozlukData?.content && (
-                                <p>{aksozlukData.content}</p>
-                            )}
-                        </SourceCard>
-                    )}
-
-                    {/* Etimoloji Türkçe Card */}
-                    {etimolojitrLoading ? (
-                        <div className="source-card source-card--etimolojitr">
-                            <div className="source-card__header">
-                                <div className="loading-spinner" />
-                                Etimoloji Türkçe
-                            </div>
-                            <p className="text-muted">Yükleniyor...</p>
-                        </div>
-                    ) : (
-                        <SourceCard source="etimolojitr" error={etimolojitrError}>
-                            {etimolojitrData && (
-                                <>
-                                    {etimolojitrData.origin && (
-                                        <p>{etimolojitrData.origin}</p>
-                                    )}
-                                    {etimolojitrData.oldestSource && (
-                                        <p className="text-muted" style={{ marginTop: "8px", fontSize: "0.9em" }}>
-                                            <strong>En Eski Kaynak:</strong> {etimolojitrData.oldestSource}
-                                        </p>
-                                    )}
-                                </>
-                            )}
-                        </SourceCard>
-                    )}
+                    <UnifiedEtymologyCard word={word} sources={sources} />
                 </section>
 
                 <AIButton word={word} />

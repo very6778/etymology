@@ -1,21 +1,10 @@
 import { NextResponse } from 'next/server';
 
-// Dynamic import for creart-tdk (CommonJS module)
-let TDKSozluk: any = null;
-
-async function getTDKInstance() {
-    if (!TDKSozluk) {
-        const module = await import('creart-tdk');
-        TDKSozluk = module.default || module;
-    }
-    return new TDKSozluk({ cache: true, timeout: 15000 });
-}
-
 interface TDKData {
     definition?: string;
-    type?: string;
     etymology?: string;
-    examples?: string[];
+    example?: string;
+    author?: string;
 }
 
 export async function GET(request: Request) {
@@ -27,21 +16,22 @@ export async function GET(request: Request) {
     }
 
     try {
-        const tdk = await getTDKInstance();
-        const result = await tdk.ara(word);
+        // Dynamic import for turkce (CommonJS module)
+        const turkceModule = await import('turkce');
+        const turkce = turkceModule.default || turkceModule;
 
-        if (!result.success || !result.data) {
+        const result = await turkce(word);
+
+        if (!result || !result.kelime) {
             return NextResponse.json({ error: 'Word not found' }, { status: 404 });
         }
 
-        const data = result.data;
-
-        // Extract relevant information
+        // Map the response to our structure
         const tdkData: TDKData = {
-            definition: data.anlamlar?.[0]?.anlam || '',
-            type: data.temelBilgiler?.kullanimTuru || data.kullanimTuru?.[0] || '',
-            etymology: data.etimoloji?.aciklama || data.temelBilgiler?.lisan || '',
-            examples: data.ornekler?.slice(0, 3) || [],
+            definition: result.anlamlar?.[0] || '',
+            etymology: result.lisan || '',
+            example: result.ornekler?.[0]?.ornek || '',
+            author: result.ornekler?.[0]?.yazar || '',
         };
 
         return NextResponse.json({

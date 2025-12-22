@@ -1,13 +1,20 @@
-import { SearchBox } from "@/components/SearchBox";
+"use client";
+
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SearchBox } from "@/components/SearchBox";
 
 export default function Home() {
-  return (
-    <>
-      <ThemeToggle />
-      <main className="page-center">
-        <SearchBox />
-      </main>
-    </>
-  );
+    return (
+        <main className="home-page page-center">
+            <ThemeToggle />
+
+            <div className="container">
+                <header className="home-header">
+                    <h1 className="home-title">Etimoloji</h1>
+                </header>
+
+                <SearchBox />
+            </div>
+        </main>
+    );
 }

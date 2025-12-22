@@ -21,6 +21,13 @@
   --color-input-border: rgba(0, 0, 0, 0.08);
   --color-shadow: rgba(0, 0, 0, 0.06);
 
+  /* Glassmorphism - Unified Card */
+  --glass-bg: rgba(255, 252, 248, 0.92);
+  --glass-blur: 24px;
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --glass-shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.12);
+
   /* Liquid Glass */
   --glass-color: #bbbbbc;
   --glass-light: #fff;
@@ -28,6 +35,12 @@
   --glass-reflex-light: 1;
   --glass-reflex-dark: 1;
   --glass-saturation: 150%;
+
+  /* Tab Colors */
+  --tab-bg: rgba(0, 0, 0, 0.06);
+  --tab-bg-active: rgba(0, 0, 0, 0.12);
+  --tab-text: var(--color-text-muted);
+  --tab-text-active: var(--color-text);
 
   /* Spacing */
   --space-xs: 4px;
@@ -42,11 +55,14 @@
   --radius-sm: 12px;
   --radius-md: 16px;
   --radius-lg: 24px;
+  --radius-xl: 32px;
   --radius-full: 9999px;
 
   /* Typography */
-  --font-heading: 'Playfair Display', Georgia, serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  --font-body: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-reading: var(--font-crimson), 'Crimson Text', Georgia, serif;
+  --font-arabic: var(--font-arabic), 'Noto Sans Arabic', 'Arabic Typesetting', sans-serif;
 
   /* Font Sizes */
   --text-xs: 0.75rem;
@@ -58,6 +74,12 @@
   --text-3xl: 2rem;
   --text-4xl: 2.5rem;
   --text-5xl: 3.5rem;
+
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+  --leading-reading: 1.85;
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -86,6 +108,12 @@
   --color-input-border: rgba(255, 255, 255, 0.1);
   --color-shadow: rgba(0, 0, 0, 0.3);
 
+  /* Glassmorphism - Dark Mode */
+  --glass-bg: rgba(40, 40, 40, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+  --glass-shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.32);
+
   /* Liquid Glass - Dark Mode */
   --glass-color: #888888;
   --glass-light: #fff;
@@ -93,6 +121,12 @@
   --glass-reflex-light: 0.4;
   --glass-reflex-dark: 2;
   --glass-saturation: 150%;
+
+  /* Tab Colors - Dark Mode */
+  --tab-bg: rgba(255, 255, 255, 0.06);
+  --tab-bg-active: rgba(255, 255, 255, 0.12);
+  --tab-text: var(--color-text-muted);
+  --tab-text-active: var(--color-text);
 }
 
 /* ===== RESET & BASE ===== */
@@ -173,6 +207,23 @@ body {
   align-items: center;
 }
 
+/* Home Page */
+.home-header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.home-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-5xl);
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+}
+
+.home-subtitle {
+  font-size: var(--text-lg);
+}
+
 /* ===== COMPONENTS ===== */
 
 /* Search Box */
@@ -180,6 +231,7 @@ body {
   position: relative;
   width: 100%;
   max-width: 400px;
+  margin: 0 auto;
 }
 
 .search-input {
@@ -335,17 +387,14 @@ body {
     color var(--transition-theme);
 }
 
-.glass-button:hover {
-  background-color: color-mix(in srgb, var(--glass-color) 22%, transparent);
-  transform: scale(1.05);
-}
+/* No hover/active effects for glass buttons */
 
-.glass-button:active {
-  transform: scale(0.98);
-}
-
-/* Back Button */
+/* Back Button - Gold Tinted Glass */
 .back-button {
+  --gold-glass: hsl(38, 35%, 55%);
+  --gold-light: hsl(45, 50%, 92%);
+  --gold-dark: hsl(30, 25%, 18%);
+
   position: fixed;
   top: var(--space-md);
   left: var(--space-md);
@@ -358,6 +407,22 @@ body {
   cursor: pointer;
   z-index: 100;
   color: var(--color-text);
+
+  /* Gold Liquid Glass Effect */
+  background-color: color-mix(in srgb, var(--gold-glass) 18%, transparent);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--gold-light) 15%, transparent),
+    inset 1.5px 2.5px 0px -1.5px color-mix(in srgb, var(--gold-light) 85%, transparent),
+    inset -1.5px -1.5px 0px -1px color-mix(in srgb, var(--gold-light) 75%, transparent),
+    inset -2px -6px 1px -4px color-mix(in srgb, var(--gold-light) 55%, transparent),
+    inset -0.5px -1px 3px 0px color-mix(in srgb, var(--gold-dark) 12%, transparent),
+    inset -1px 2px 0px -1px color-mix(in srgb, var(--gold-dark) 18%, transparent),
+    0px 1px 4px 0px color-mix(in srgb, var(--gold-dark) 10%, transparent),
+    0px 4px 12px 0px color-mix(in srgb, var(--gold-dark) 8%, transparent);
+  transition: box-shadow var(--transition-theme), background-color var(--transition-theme);
 }
 
 .back-button--hidden {
@@ -365,8 +430,12 @@ body {
   pointer-events: none;
 }
 
-/* Theme Toggle */
+/* Theme Toggle - Gold Tinted Glass */
 .theme-toggle {
+  --gold-glass: hsl(38, 35%, 55%);
+  --gold-light: hsl(45, 50%, 92%);
+  --gold-dark: hsl(30, 25%, 18%);
+
   position: fixed;
   top: var(--space-md);
   right: var(--space-md);
@@ -379,7 +448,31 @@ body {
   cursor: pointer;
   z-index: 100;
   color: var(--color-text);
+
+  /* Gold Liquid Glass Effect */
+  background-color: color-mix(in srgb, var(--gold-glass) 18%, transparent);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: none;
+  box-shadow:
+    /* Inner light reflections */
+    inset 0 0 0 1px color-mix(in srgb, var(--gold-light) 15%, transparent),
+    inset 1.5px 2.5px 0px -1.5px color-mix(in srgb, var(--gold-light) 85%, transparent),
+    inset -1.5px -1.5px 0px -1px color-mix(in srgb, var(--gold-light) 75%, transparent),
+    inset -2px -6px 1px -4px color-mix(in srgb, var(--gold-light) 55%, transparent),
+    /* Inner dark shadows */
+    inset -0.5px -1px 3px 0px color-mix(in srgb, var(--gold-dark) 12%, transparent),
+    inset -1px 2px 0px -1px color-mix(in srgb, var(--gold-dark) 18%, transparent),
+    /* Outer shadow */
+    0px 1px 4px 0px color-mix(in srgb, var(--gold-dark) 10%, transparent),
+    0px 4px 12px 0px color-mix(in srgb, var(--gold-dark) 8%, transparent);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-theme),
+    background-color var(--transition-theme);
 }
+
+/* No hover/active effects for theme toggle */
 
 /* Result Page */
 .result-page {
@@ -427,6 +520,26 @@ body {
   padding-top: var(--space-xl);
   border-top: 1px solid var(--color-input-border);
   transition: border-color var(--transition-theme);
+}
+
+/* AI Button - Gold Tinted Glass */
+.ai-section .button.glass-button {
+  --gold-glass: hsl(38, 35%, 55%);
+  --gold-light: hsl(45, 50%, 92%);
+  --gold-dark: hsl(30, 25%, 18%);
+
+  background-color: color-mix(in srgb, var(--gold-glass) 18%, transparent);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--gold-light) 15%, transparent),
+    inset 1.5px 2.5px 0px -1.5px color-mix(in srgb, var(--gold-light) 85%, transparent),
+    inset -1.5px -1.5px 0px -1px color-mix(in srgb, var(--gold-light) 75%, transparent),
+    inset -2px -6px 1px -4px color-mix(in srgb, var(--gold-light) 55%, transparent),
+    inset -0.5px -1px 3px 0px color-mix(in srgb, var(--gold-dark) 12%, transparent),
+    inset -1px 2px 0px -1px color-mix(in srgb, var(--gold-dark) 18%, transparent),
+    0px 1px 4px 0px color-mix(in srgb, var(--gold-dark) 10%, transparent),
+    0px 4px 12px 0px color-mix(in srgb, var(--gold-dark) 8%, transparent);
 }
 
 .ai-result {
@@ -523,6 +636,355 @@ body {
   }
 }
 
+/* ===== UNIFIED ETYMOLOGY CARD ===== */
+.unified-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+  transition:
+    background-color var(--transition-theme),
+    border-color var(--transition-theme),
+    box-shadow var(--transition-normal);
+}
+
+.unified-card:hover {
+  box-shadow: var(--glass-shadow-hover);
+}
+
+/* Card Header with Tabs */
+.unified-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.02);
+  transition: background-color var(--transition-theme), border-color var(--transition-theme);
+}
+
+[data-theme="dark"] .unified-card__header {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Tab Navigation - Gold Tinted Glass Style */
+.tab-nav {
+  --gold-glass: hsl(38, 35%, 55%);
+  --gold-light: hsl(45, 50%, 92%);
+  --gold-dark: hsl(30, 25%, 18%);
+
+  position: relative;
+  display: flex;
+  gap: 4px;
+  padding: 4px 6px;
+  background: color-mix(in srgb, var(--gold-glass) 15%, transparent);
+  backdrop-filter: blur(8px) saturate(160%);
+  -webkit-backdrop-filter: blur(8px) saturate(160%);
+  border-radius: var(--radius-full);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--gold-light) 12%, transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--gold-light) 75%, transparent),
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--gold-light) 65%, transparent),
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--gold-dark) 12%, transparent),
+    0px 2px 8px 0px color-mix(in srgb, var(--gold-dark) 8%, transparent);
+  transition: box-shadow var(--transition-theme), background-color var(--transition-theme);
+}
+
+/* Sliding Indicator - the gold glass pill that slides behind active tab */
+.tab-nav::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  width: calc((100% - 12px - 8px) / 3);
+  /* 3 tabs, accounting for padding and gaps */
+  height: calc(100% - 8px);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--gold-glass) 35%, transparent);
+  z-index: 0;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--gold-light) 15%, transparent),
+    inset 2px 1px 0px -1px color-mix(in srgb, var(--gold-light) 80%, transparent),
+    inset -1.5px -1px 0px -1px color-mix(in srgb, var(--gold-light) 70%, transparent),
+    inset -1px 2px 3px -1px color-mix(in srgb, var(--gold-dark) 18%, transparent),
+    0px 2px 6px 0px color-mix(in srgb, var(--gold-dark) 8%, transparent);
+  transition:
+    translate 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow var(--transition-theme),
+    background-color var(--transition-theme);
+}
+
+/* Indicator positions based on data-active-tab attribute */
+.tab-nav[data-active-tab="0"]::after {
+  translate: 0 0;
+  transform-origin: right;
+  animation: tabSlide 400ms ease;
+}
+
+.tab-nav[data-active-tab="1"]::after {
+  translate: calc(100% + 4px) 0;
+  animation: tabSlide2 400ms ease;
+}
+
+.tab-nav[data-active-tab="2"]::after {
+  translate: calc(200% + 8px) 0;
+  transform-origin: left;
+  animation: tabSlide 400ms ease;
+}
+
+@keyframes tabSlide {
+  0% {
+    scale: 1 1;
+  }
+
+  50% {
+    scale: 1.08 1;
+  }
+
+  100% {
+    scale: 1 1;
+  }
+}
+
+@keyframes tabSlide2 {
+  0% {
+    scale: 1 1;
+  }
+
+  50% {
+    scale: 1.15 1;
+  }
+
+  100% {
+    scale: 1 1;
+  }
+}
+
+/* Tab Items */
+.tab-item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  min-width: calc((100% - 8px) / 3);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--tab-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: color 160ms ease;
+  white-space: nowrap;
+}
+
+.tab-item:hover {
+  color: var(--tab-text-active);
+}
+
+.tab-item:hover .tab-item__icon {
+  scale: 1.15;
+}
+
+.tab-item.active {
+  color: var(--tab-text-active);
+}
+
+.tab-item__icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+  transition: scale 200ms cubic-bezier(0.5, 0, 0, 1), opacity 160ms ease;
+}
+
+.tab-item.active .tab-item__icon {
+  opacity: 1;
+  scale: 1;
+}
+
+/* Card Body */
+.unified-card__body {
+  padding: var(--space-lg) var(--space-xl);
+}
+
+/* Source Header inside card body */
+.source-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+
+.source-title {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+}
+
+.source-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--color-text-muted);
+  background: var(--tab-bg);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+}
+
+.source-link:hover {
+  color: var(--color-text);
+  background: var(--tab-bg-active);
+}
+
+/* Etymology Content */
+.etymology-content {
+  font-family: var(--font-reading);
+  font-size: 1.05rem;
+  line-height: var(--leading-reading);
+  color: var(--color-text);
+}
+
+.etymology-content p {
+  margin-bottom: var(--space-md);
+}
+
+.etymology-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Arabic/Hebrew Script */
+.script-arabic,
+.script-hebrew {
+  font-family: var(--font-arabic);
+  font-size: 1.1em;
+  direction: rtl;
+  unicode-bidi: isolate;
+}
+
+/* Romanized text (transliteration) */
+.text-roman {
+  font-style: italic;
+  font-family: var(--font-reading);
+}
+
+/* Etymology Note Section */
+.etymology-note {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px dashed var(--color-input-border);
+}
+
+.etymology-note__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.etymology-note__content {
+  font-family: var(--font-reading);
+  font-size: 0.95rem;
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-muted);
+}
+
+/* Loading State in Unified Card */
+.unified-card__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  color: var(--color-text-muted);
+  gap: var(--space-md);
+}
+
+/* Error State in Unified Card */
+.unified-card__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  color: var(--color-text-muted);
+  text-align: center;
+  gap: var(--space-sm);
+}
+
+.unified-card__error-icon {
+  opacity: 0.5;
+}
+
+/* Tab Content Animation */
+.tab-content {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Etymology Content - reduced contrast for better readability */
+.etymology-content {
+  font-family: var(--font-reading);
+  font-size: 1.05rem;
+  line-height: 1.85;
+  color: var(--color-text-muted);
+}
+
+.etymology-content p {
+  margin-bottom: var(--space-md);
+}
+
+.etymology-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Etymology Notes - even more subtle for hierarchy */
+.etymology-note {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-input-border);
+}
+
+.etymology-note__label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-subtle);
+  margin-bottom: var(--space-xs);
+}
+
+.etymology-note__content {
+  font-family: var(--font-reading);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--color-text-subtle);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
   :root {
@@ -537,6 +999,34 @@ body {
 
   .source-card {
     padding: var(--space-md);
+  }
+
+  /* Unified Card Mobile */
+  .unified-card {
+    border-radius: var(--radius-lg);
+  }
+
+  .unified-card__body {
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .tab-nav {
+    gap: 2px;
+    padding: 2px;
+  }
+
+  .tab-item {
+    padding: var(--space-sm) var(--space-sm);
+    font-size: var(--text-xs);
+  }
+
+  .tab-item__label {
+    display: none;
+  }
+
+  .tab-item__icon {
+    width: 18px;
+    height: 18px;
   }
 }
 
