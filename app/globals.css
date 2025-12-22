@@ -430,6 +430,34 @@ body {
   pointer-events: none;
 }
 
+/* Dark mode - less bright gold glass for all buttons */
+[data-theme="dark"] .back-button,
+[data-theme="dark"] .theme-toggle,
+[data-theme="dark"] .ai-section .button.glass-button,
+[data-theme="dark"] .tab-nav {
+  --gold-glass: hsl(38, 18%, 38%);
+  --gold-light: hsl(45, 25%, 70%);
+  --gold-dark: hsl(30, 20%, 10%);
+}
+
+/* Dark mode - reduce opacity by 40% on glass backgrounds */
+[data-theme="dark"] .back-button,
+[data-theme="dark"] .theme-toggle {
+  background-color: color-mix(in srgb, var(--gold-glass) 7%, transparent);
+}
+
+[data-theme="dark"] .ai-section .button.glass-button {
+  background-color: color-mix(in srgb, var(--gold-glass) 7%, transparent);
+}
+
+[data-theme="dark"] .tab-nav {
+  background: color-mix(in srgb, var(--gold-glass) 5%, transparent);
+}
+
+[data-theme="dark"] .tab-nav::after {
+  background: color-mix(in srgb, var(--gold-glass) 13%, transparent);
+}
+
 /* Theme Toggle - Gold Tinted Glass */
 .theme-toggle {
   --gold-glass: hsl(38, 35%, 55%);
