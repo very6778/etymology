@@ -69,6 +69,27 @@ export async function GET(request: Request) {
         // Simple regex to strip <a ...> and </a> but keep content
         content = content.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
 
+        // Remove leading junk that could shift the drop cap:
+        // 1. Empty tags (with or without attributes)
+        // 2. Spans containing only &nbsp; and whitespace
+        // 3. Leading &nbsp; entities
+        // 4. &nbsp; inside span tags at the beginning
+
+        // Remove spans that contain only &nbsp; and whitespace (like <span style="...">   </span>)
+        content = content.replace(/<span[^>]*>(\s|&nbsp;)*<\/span>/gi, '');
+
+        // Clean &nbsp; from INSIDE opening span tags (e.g., <span style="...">   Akıllı -> <span style="...">Akıllı)
+        content = content.replace(/(<span[^>]*>)(\s|&nbsp;)+/gi, '$1');
+
+        // Now clean leading &nbsp; and whitespace repeatedly until stable
+        let previousContent = '';
+        while (previousContent !== content) {
+            previousContent = content;
+            content = content.replace(/^(\s|&nbsp;)+/gi, '');
+            content = content.replace(/^<span[^>]*>(\s|&nbsp;)*<\/span>/gi, '');
+        }
+        content = content.trim();
+
         if (!content || content.length < 10) {
             return NextResponse.json({ error: 'No etymology content found' }, { status: 404 });
         }

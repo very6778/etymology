@@ -102,6 +102,45 @@ const sourceConfig: Record<SourceType, { name: string; icon: typeof Scroll; url:
 
 const sourceOrder: SourceType[] = ["aksozluk", "etimolojitr", "nisanyan"];
 
+// Language-to-color mapping for Contextual Ambience
+// These colors create a subtle, subliminal "feel" based on the word's origin
+const languageAmbience: Record<string, string> = {
+    // Semitic languages - warm amber/earth tones
+    "Ar": "rgba(212, 165, 116, 0.11)",      // Arapça
+    "İbr": "rgba(212, 165, 116, 0.11)",     // İbranice
+
+    // Persian/Indo-Iranian - warm rose/amber
+    "Far": "rgba(205, 133, 133, 0.11)",     // Farsça
+    "Hin": "rgba(205, 133, 133, 0.11)",     // Hintçe
+
+    // Romance languages - lavender/purple
+    "Fr": "rgba(200, 162, 200, 0.11)",      // Fransızca
+    "İt": "rgba(168, 213, 186, 0.11)",      // İtalyanca - soft green
+    "İsp": "rgba(200, 162, 200, 0.11)",     // İspanyolca
+    "Lat": "rgba(200, 162, 200, 0.11)",     // Latince
+    "Por": "rgba(200, 162, 200, 0.11)",     // Portekizce
+
+    // Greek - sky blue
+    "Yun": "rgba(135, 206, 235, 0.11)",     // Yunanca
+    "EYun": "rgba(135, 206, 235, 0.11)",    // Eski Yunanca
+
+    // Turkic languages - turquoise/cyan
+    "ETr": "rgba(64, 224, 208, 0.11)",      // Eski Türkçe
+    "ETr-O": "rgba(64, 224, 208, 0.11)",    // Eski Türkçe (Oğuzca)
+    "TTr": "rgba(64, 224, 208, 0.11)",      // Türkiye Türkçesi
+    "OTr": "rgba(64, 224, 208, 0.11)",      // Osmanlı Türkçesi
+
+    // Germanic/English - cool steel blue
+    "İng": "rgba(176, 196, 222, 0.11)",     // İngilizce
+    "Alm": "rgba(176, 196, 222, 0.11)",     // Almanca
+
+    // Slavic - cool violet
+    "Rus": "rgba(186, 176, 222, 0.11)",     // Rusça
+
+    // Default - subtle gold (matches our theme)
+    "default": "rgba(184, 134, 11, 0.10)"
+};
+
 // Helper function to break long text into paragraphs at ~200 char intervals (at nearest period)
 // Limits to 2 splits max - first 2 paragraphs split, rest stays together
 const formatTextWithParagraphs = (text: string): string[] => {
@@ -145,10 +184,17 @@ const formatTextWithParagraphs = (text: string): string[] => {
 // HTML-aware paragraph formatting: splits HTML content at sentence boundaries
 // while preserving HTML tags. Works by finding ". " in the text content.
 const formatHtmlWithParagraphs = (html: string): string[] => {
-    if (!html || html.length <= 200) return [html];
+    if (!html) return [html];
+
+    // Clean up leading whitespace, &nbsp;, and empty tags that could shift drop cap
+    let cleanedHtml = html
+        .replace(/^(\s|&nbsp;|<br\s*\/?>|<span>\s*<\/span>|<em>\s*<\/em>|<strong>\s*<\/strong>)+/gi, '')
+        .trim();
+
+    if (cleanedHtml.length <= 200) return [cleanedHtml];
 
     const paragraphs: string[] = [];
-    let remaining = html;
+    let remaining = cleanedHtml;
     let splits = 0;
     const maxSplits = 2;
 
@@ -208,12 +254,25 @@ const formatHtmlWithParagraphs = (html: string): string[] => {
 import { useDrag } from "@use-gesture/react";
 import { AnimatePresence, motion } from "framer-motion";
 
+// Helper to extract origin language color from Nişanyan data
+const getOriginLanguageColor = (nisanyanData: NisanyanData | null): string => {
+    if (!nisanyanData?.words?.[0]?.etymologies?.[0]?.languages?.[0]) {
+        return languageAmbience["default"];
+    }
+
+    const abbreviation = nisanyanData.words[0].etymologies[0].languages[0].abbreviation;
+    return languageAmbience[abbreviation] || languageAmbience["default"];
+};
+
 export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProps) {
     const [activeTab, setActiveTab] = useState<SourceType>("aksozluk");
     const [direction, setDirection] = useState(0);
     const { triggerFeedback } = useSensoryFeedback();
 
     const currentSource = sources[activeTab];
+
+    // Get ambience color from Nişanyan origin language (applies to all tabs for consistency)
+    const ambienceColor = getOriginLanguageColor(sources.nisanyan.data);
 
     const handleTabClick = (source: SourceType) => {
         if (activeTab === source) {
@@ -458,11 +517,15 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
                 </nav>
             </div>
 
-            {/* Body - Content Only */}
+            {/* Body - Content Only with Contextual Ambience */}
             <motion.div
                 className="unified-card__body"
                 layout
-                style={{ position: 'relative', overflow: 'hidden' }}
+                style={{
+                    position: 'relative',
+                    overflow: 'hidden',
+                    background: `radial-gradient(ellipse at center, ${ambienceColor}, transparent 70%)`
+                }}
                 transition={{ duration: 0.3, type: "spring", stiffness: 200, damping: 25 }}
             >
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
