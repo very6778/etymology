@@ -1041,14 +1041,29 @@ body {
   /* Unified Card Mobile */
   .unified-card {
     border-radius: var(--radius-lg);
+    /* Create stacking context for sticky header */
+    position: relative;
+    overflow: visible;
+    /* Allow sticky to work */
   }
 
   /* Header becomes a wrapper for fixed nav */
+  /* Header becomes sticky wrapper */
   .unified-card__header {
-    height: 0;
-    padding: 0;
+    height: auto;
+    padding: var(--space-xs);
     border: none;
     background: transparent;
+
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    /* Glass background behind sticky header to prevent text overlap readability */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    margin-bottom: -10px;
+    /* Pull content up slightly */
   }
 
   [data-theme="dark"] .unified-card__header {
@@ -1056,67 +1071,127 @@ body {
   }
 
   .unified-card__body {
-    padding: var(--space-md) var(--space-md);
+    padding: var(--space-lg) var(--space-md) var(--space-md);
   }
 
-  /* Fixed Bottom Tab Bar */
-  /* Fixed Bottom Tab Bar */
+  /* Sticky Top Tab Bar */
   .tab-nav {
     /* Override layout variables for mobile */
     --tab-gap: 0px;
     --tab-padding-x: 4px;
     --tab-padding-y: 4px;
 
-    position: fixed;
-    bottom: var(--space-md);
-    left: var(--space-md);
-    right: var(--space-md);
-    z-index: 9999;
+    width: 100%;
+    height: 48px;
 
-    height: 56px;
-    /* padding and gap are handled by variables in the main rule now, 
+    /* Stronger glass for sticky element */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  /* padding and gap are handled by variables in the main rule now, 
        but we need to ensure the main rule uses them. 
        Wait, the main rule uses `padding: var(--tab-padding-y) var(--tab-padding-x);` 
        and `gap: var(--tab-gap);`.
        So setting the variables here IS enough if inheritance works or if I set them on .tab-nav itself. */
 
-    /* Stronger glass for fixed element */
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  /* Stronger glass for fixed element */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 
-    /* Safe area margin adjustment */
-    margin-bottom: env(safe-area-inset-bottom);
-  }
+  /* Safe area margin adjustment */
+  margin-bottom: env(safe-area-inset-bottom);
+}
 
-  /* Active indicator scaling for mobile width */
-  .tab-nav::after {
-    /* Indicator logic handles relative width, handled by JS/CSS calculation */
-    /* Only need to ensure height matches new taller bar */
-    height: calc(100% - 8px);
-    top: 4px;
-    border-radius: 28px;
-    /* Circular pill ends */
-  }
+/* Active indicator scaling for mobile width */
+.tab-nav::after {
+  /* Indicator logic handles relative width, handled by JS/CSS calculation */
+  /* Only need to ensure height matches new taller bar */
+  height: calc(100% - 8px);
+  top: 4px;
+  border-radius: 28px;
+  /* Circular pill ends */
+}
 
-  .tab-item {
-    flex: 1;
-    height: 100%;
-    padding: 0;
-    justify-content: center;
-    border-radius: 99px;
-  }
+.tab-item {
+  flex: 1;
+  height: 100%;
+  padding: 0;
+  justify-content: center;
+  border-radius: 99px;
+}
 
-  .tab-item__label {
-    display: none;
-  }
+.tab-item__label {
+  display: none;
+}
 
-  .tab-item__icon {
-    width: 24px;
-    height: 24px;
-  }
+.tab-item__icon {
+  width: 24px;
+  height: 24px;
+}
 }
 
 @media (min-width: 768px) {
   .container {
     padding: 0 var(--space-lg);
   }
+}
+
+/* Drop Cap Styling (Global) */
+.etymology-content>p:first-of-type::first-letter {
+  float: left;
+  font-family: var(--font-playfair), serif;
+  /* Use Playfair Display */
+  font-size: 3.5rem;
+  line-height: 0.8;
+  padding-right: var(--space-sm);
+  padding-left: 2px;
+  color: var(--gold-glass);
+  /* Use the gold color */
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.05);
+  /* Subtle shadow for depth */
+  font-weight: 700;
+  margin-top: 6px;
+  margin-right: 6px;
+}
+
+[data-theme="dark"] .etymology-content>p:first-of-type::first-letter {
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+  /* Stronger shadow in dark mode */
+}
+
+/* Skeleton Loader */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg,
+      rgba(0, 0, 0, 0.05) 25%,
+      rgba(0, 0, 0, 0.1) 37%,
+      rgba(0, 0, 0, 0.05) 63%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.05) 25%,
+      rgba(255, 255, 255, 0.08) 37%,
+      rgba(255, 255, 255, 0.05) 63%);
+}
+
+.skeleton-text {
+  height: 14px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.skeleton-text:last-child {
+  width: 80%;
 }

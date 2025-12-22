@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Scroll, Book, Languages, AlertCircle } from "lucide-react";
+import { useSensoryFeedback } from "@/hooks/useSensoryFeedback";
 
 export type SourceType = "nisanyan" | "aksozluk" | "etimolojitr";
 
@@ -134,9 +135,12 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
     const renderContent = () => {
         if (currentSource.loading) {
             return (
-                <div className="unified-card__loading">
-                    <div className="loading-spinner" />
-                    <span>yükleniyor...</span>
+                <div className="unified-card__loading" style={{ display: 'block', width: '100%', padding: '0 8px' }}>
+                    <div className="skeleton skeleton-text" style={{ width: "90%", marginBottom: "12px" }} />
+                    <div className="skeleton skeleton-text" style={{ width: "98%", marginBottom: "12px" }} />
+                    <div className="skeleton skeleton-text" style={{ width: "95%", marginBottom: "12px" }} />
+                    <div className="skeleton skeleton-text" style={{ width: "85%", marginBottom: "12px" }} />
+                    <div className="skeleton skeleton-text" style={{ width: "40%" }} />
                 </div>
             );
         }
