@@ -127,10 +127,43 @@ const formatTextWithParagraphs = (text: string): string[] => {
     return paragraphs.filter(p => p.length > 0);
 };
 
+import { useDrag } from "@use-gesture/react";
+
 export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProps) {
     const [activeTab, setActiveTab] = useState<SourceType>("aksozluk");
+    const { triggerFeedback } = useSensoryFeedback();
 
     const currentSource = sources[activeTab];
+
+    const handleTabClick = (source: SourceType) => {
+        if (activeTab === source) {
+            window.open(sourceConfig[source].url(word), '_blank');
+        } else {
+            triggerFeedback();
+            setActiveTab(source);
+        }
+    };
+
+    // Swipe logic
+    const bind = useDrag(({ swipe: [swipeX] }) => {
+        const currentIndex = sourceOrder.indexOf(activeTab);
+
+        if (swipeX === -1) {
+            // Swipe Left -> Next Tab
+            if (currentIndex < sourceOrder.length - 1) {
+                const nextSource = sourceOrder[currentIndex + 1];
+                triggerFeedback();
+                setActiveTab(nextSource);
+            }
+        } else if (swipeX === 1) {
+            // Swipe Right -> Previous Tab
+            if (currentIndex > 0) {
+                const prevSource = sourceOrder[currentIndex - 1];
+                triggerFeedback();
+                setActiveTab(prevSource);
+            }
+        }
+    });
 
     const renderContent = () => {
         if (currentSource.loading) {
@@ -240,18 +273,10 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
         );
     };
 
-    const handleTabClick = (source: SourceType) => {
-        if (activeTab === source) {
-            // Already active - open source URL
-            window.open(sourceConfig[source].url(word), '_blank');
-        } else {
-            // Switch to this tab
-            setActiveTab(source);
-        }
-    };
+
 
     return (
-        <div className="unified-card">
+        <div className="unified-card" {...bind()} style={{ touchAction: "pan-y" }}>
             {/* Header with Tabs */}
             <div className="unified-card__header">
                 <nav className="tab-nav" data-active-tab={sourceOrder.indexOf(activeTab)}>
