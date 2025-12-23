@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Scroll, Book, Languages, AlertCircle } from "lucide-react";
+import { Scroll, Book, Globe, AlertCircle } from "lucide-react";
 import { useSensoryFeedback } from "@/hooks/useSensoryFeedback";
 
 export type SourceType = "nisanyan" | "aksozluk" | "etimolojitr";
@@ -95,7 +95,7 @@ const sourceConfig: Record<SourceType, { name: string; icon: typeof Scroll; url:
     },
     etimolojitr: {
         name: "etimoloji türkçe",
-        icon: Languages,
+        icon: Globe,
         url: (word) => `https://www.etimolojiturkce.com/kelime/${encodeURIComponent(word)}`,
     },
 };
@@ -313,23 +313,28 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
         enter: (direction: number) => ({
             x: direction > 0 ? "100%" : "-100%",
             opacity: 0,
+            filter: "blur(8px)",
         }),
         center: {
             zIndex: 1,
             x: 0,
             opacity: 1,
+            filter: "blur(0px)",
             transition: {
                 x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 }
+                opacity: { duration: 0.6, delay: 0.15 },
+                filter: { duration: 0.6, delay: 0.15 }
             } as any
         },
         exit: (direction: number) => ({
             zIndex: 0,
             x: direction < 0 ? "100%" : "-100%",
             opacity: 0,
+            filter: "blur(8px)",
             transition: {
                 x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 }
+                opacity: { duration: 0.2 },
+                filter: { duration: 0.2 }
             } as any
         })
     };
@@ -526,7 +531,7 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
                     overflow: 'hidden',
                     background: `radial-gradient(ellipse at center, ${ambienceColor}, transparent 70%)`
                 }}
-                transition={{ duration: 0.3, type: "spring", stiffness: 200, damping: 25 }}
+                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             >
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                     <motion.div

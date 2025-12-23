@@ -276,6 +276,46 @@ body {
   transition: color var(--transition-theme);
 }
 
+/* Search Box Transition States */
+.search-box__inner {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.search-box__transitioning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  /* Match input height */
+}
+
+.search-word-float {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  color: var(--color-text);
+  text-align: center;
+}
+
+/* Transition Overlay - Cinematic Crossfade */
+.transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center,
+      rgba(0, 0, 0, 0.15) 0%,
+      rgba(0, 0, 0, 0.3) 100%);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+[data-theme="dark"] .transition-overlay {
+  background: radial-gradient(ellipse at center,
+      rgba(0, 0, 0, 0.2) 0%,
+      rgba(0, 0, 0, 0.5) 100%);
+}
+
 /* Source Cards */
 .source-card {
   border-radius: var(--radius-lg);
@@ -835,6 +875,8 @@ body {
 .tab-item__icon {
   width: 16px;
   height: 16px;
+  min-width: 16px;
+  flex-shrink: 0;
   opacity: 0.7;
   transition: scale 200ms cubic-bezier(0.5, 0, 0, 1), opacity 160ms ease;
 }

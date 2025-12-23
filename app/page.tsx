@@ -1,7 +1,7 @@
 "use client";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { SearchBox } from "@/components/SearchBox";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Home() {
     return (
@@ -9,10 +9,6 @@ export default function Home() {
             <ThemeToggle />
 
             <div className="container">
-                <header className="home-header">
-                    <h1 className="home-title">Etimoloji</h1>
-                </header>
-
                 <SearchBox />
             </div>
         </main>

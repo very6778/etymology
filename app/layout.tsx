@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Inter, Crimson_Text, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { PageTransitionProvider } from "@/components/PageTransitionProvider";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -43,7 +44,9 @@ export default function RootLayout({
     <html lang="tr" suppressHydrationWarning>
       <body className={`${playfair.variable} ${inter.variable} ${crimson.variable} ${notoArabic.variable}`}>
         <ThemeProvider>
-          {children}
+          <PageTransitionProvider>
+            {children}
+          </PageTransitionProvider>
         </ThemeProvider>
       </body>
     </html>
