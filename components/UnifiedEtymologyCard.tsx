@@ -311,30 +311,34 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
 
     const variants = {
         enter: (direction: number) => ({
-            x: direction > 0 ? "100%" : "-100%",
+            zIndex: 1,
+            x: 0,
             opacity: 0,
-            filter: "blur(8px)",
+            scale: 0.98, // Slightly smaller, as if coming from background
+            filter: "blur(4px)",
         }),
         center: {
             zIndex: 1,
             x: 0,
             opacity: 1,
+            scale: 1,
             filter: "blur(0px)",
             transition: {
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.6, delay: 0.15 },
-                filter: { duration: 0.6, delay: 0.15 }
+                // Slower, overdamped spring for "breathing" effect
+                opacity: { duration: 0.8, ease: "easeOut" },
+                scale: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+                filter: { duration: 0.6, delay: 0.1 }
             } as any
         },
         exit: (direction: number) => ({
             zIndex: 0,
-            x: direction < 0 ? "100%" : "-100%",
+            x: 0,
             opacity: 0,
-            filter: "blur(8px)",
+            scale: 1, // Keep scale static on exit to prevent "falling away" feeling
+            filter: "blur(6px)",
             transition: {
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 },
-                filter: { duration: 0.2 }
+                opacity: { duration: 0.4, ease: "easeOut" },
+                filter: { duration: 0.4, ease: "easeOut" }
             } as any
         })
     };
@@ -522,7 +526,7 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
                 </nav>
             </div>
 
-            {/* Body - Content Only with Contextual Ambience */}
+            {/* Body - Layout Animation with Contextual Ambience */}
             <motion.div
                 className="unified-card__body"
                 layout
@@ -531,7 +535,9 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
                     overflow: 'hidden',
                     background: `radial-gradient(ellipse at center, ${ambienceColor}, transparent 70%)`
                 }}
-                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                transition={{
+                    layout: { duration: 0.9, ease: [0.22, 1, 0.36, 1] }
+                }}
             >
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                     <motion.div
@@ -541,7 +547,6 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
                         initial="enter"
                         animate="center"
                         exit="exit"
-                        layout // Enables smooth height resizing
                     >
                         {renderContent()}
                     </motion.div>
