@@ -69,6 +69,10 @@ export async function GET(request: Request) {
         // Simple regex to strip <a ...> and </a> but keep content
         content = content.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
 
+        // Strip style attributes from all tags to prevent overriding our CSS
+        content = content.replace(/\s*style="[^"]*"/gi, '');
+        content = content.replace(/\s*style='[^']*'/gi, '');
+
         // Remove leading junk that could shift the drop cap:
         // 1. Empty tags (with or without attributes)
         // 2. Spans containing only &nbsp; and whitespace

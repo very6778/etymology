@@ -1014,8 +1014,8 @@ body {
 /* Etymology Content - reduced contrast for better readability */
 .etymology-content {
   font-family: var(--font-reading);
-  font-size: 1.05rem;
-  line-height: 1.85;
+  font-size: 1.2rem;
+  line-height: 1.8;
   color: var(--color-text-muted);
 }
 
@@ -1045,8 +1045,8 @@ body {
 
 .etymology-note__content {
   font-family: var(--font-reading);
-  font-size: 0.95rem;
-  line-height: 1.7;
+  font-size: 1.1rem;
+  line-height: 1.75;
   color: var(--color-text-subtle);
 }
 
@@ -1164,28 +1164,7 @@ body {
   }
 }
 
-/* Drop Cap Styling (Global) */
-.etymology-content>p:first-of-type::first-letter {
-  float: left;
-  font-family: var(--font-playfair), serif;
-  /* Use Playfair Display */
-  font-size: 3.5rem;
-  line-height: 0.8;
-  padding-right: var(--space-sm);
-  padding-left: 2px;
-  color: var(--gold-glass);
-  /* Use the gold color */
-  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.05);
-  /* Subtle shadow for depth */
-  font-weight: 700;
-  margin-top: 6px;
-  margin-right: 6px;
-}
-
-[data-theme="dark"] .etymology-content>p:first-of-type::first-letter {
-  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
-  /* Stronger shadow in dark mode */
-}
+/* Drop Cap Styling Removed */
 
 /* Skeleton Loader */
 @keyframes shimmer {
