@@ -70,7 +70,7 @@ export default function WordPage() {
     // ANIMATION CONSTANTS
     const MIST_TRANSITION = {
         duration: 0.8,
-        ease: [0.33, 1, 0.68, 1] // Smooth cinematic curve
+        ease: [0.33, 1, 0.68, 1] as const // Cast to const tuple to satisfy Framer Motion type
     };
 
     return (
