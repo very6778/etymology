@@ -1050,6 +1050,31 @@ body {
   color: var(--color-text-subtle);
 }
 
+/* Editorial Divider - Clean Single Definition */
+.etymology-divider {
+  position: relative;
+  text-align: center;
+  margin: var(--space-md) 0;
+  /* Tight spacing like "En Eski Kaynak" */
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--color-input-border), transparent);
+  font-size: 0;
+  /* Hide *** text */
+}
+
+.etymology-divider::after {
+  content: "◆";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-card-bg);
+  padding: 0 0.75rem;
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  opacity: 0.6;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

@@ -16,77 +16,104 @@ export async function GET(request: Request) {
     }
 
     try {
-        // Etimoloji Türkçe supports Turkish characters in URL
-        const url = `https://www.etimolojiturkce.com/kelime/${encodeURIComponent(word.toLowerCase())}`;
+        const baseWord = word.toLowerCase();
 
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-            },
-        });
+        // EtimolojiTR uses patterns like "bağ", "bağ1", "bağ2" (no hyphen usually)
+        const variations = [
+            baseWord,
+            `${baseWord}1`,
+            `${baseWord}2`,
+            `${baseWord}3`
+        ];
 
-        if (!response.ok) {
-            return NextResponse.json({ error: 'Word not found' }, { status: 404 });
-        }
-
-        const html = await response.text();
-        const $ = cheerio.load(html);
-
-        // Extract the etymology content
-        // The page structure has h3 headers with sections
-        let origin = '';
-        let oldestSource = '';
-
-        // Find "Kelime Kökeni" section
-        $('h3').each((_, el) => {
-            const headerText = $(el).text().trim();
-            if (headerText.includes('Kelime Kökeni')) {
-                // Get the next paragraph HTML
-                const nextP = $(el).next('p').html()?.trim();
-                if (nextP) {
-                    origin = nextP;
+        // Fetch all in parallel
+        const responses = await Promise.all(
+            variations.map(async (v) => {
+                const url = `https://www.etimolojiturkce.com/kelime/${encodeURIComponent(v)}`;
+                try {
+                    const res = await fetch(url, {
+                        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' }
+                    });
+                    if (!res.ok) return null;
+                    const text = await res.text();
+                    return { html: text, url: url, variation: v };
+                } catch (e) {
+                    return null;
                 }
-            }
-            if (headerText.includes('Tarihte En Eski Kaynak')) {
-                // Get the next paragraph HTML for oldest source
-                const nextP = $(el).next('p').html()?.trim();
-                if (nextP) {
-                    oldestSource = nextP;
+            })
+        );
+
+        const validResults: EtimolojiTRData[] = [];
+
+        for (const response of responses) {
+            if (!response) continue;
+
+            const $ = cheerio.load(response.html);
+            let origin = '';
+            let oldestSource = '';
+
+            // Find "Kelime Kökeni" section
+            $('h3').each((_, el) => {
+                const headerText = $(el).text().trim();
+                if (headerText.includes('Kelime Kökeni')) {
+                    const nextP = $(el).next('p').html()?.trim();
+                    if (nextP) origin = nextP;
                 }
-            }
-        });
+                if (headerText.includes('Tarihte En Eski Kaynak')) {
+                    const nextP = $(el).next('p').html()?.trim();
+                    if (nextP) oldestSource = nextP;
+                }
+            });
 
-        // Fallback: get all paragraphs after h1
-        if (!origin) {
-            const paragraphs = $('article p, .content p, main p').map((_, el) => $(el).html()?.trim()).get();
-            // Join with space and maybe limit length if really needed, but usually we define structure
-            origin = paragraphs.filter(p => p && p.length > 20).join(' ').substring(0, 800);
+            // Fallback content logic
+            if (!origin) {
+                const paragraphs = $('article p, .content p, main p').map((_, el) => $(el).html()?.trim()).get();
+                if (paragraphs.length > 0) origin = paragraphs.join(' ').substring(0, 800);
+            }
+
+            // Cleanup
+            if (origin) {
+                origin = origin.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
+                origin = origin.replace(/\s*style="[^"]*"/gi, '');
+                origin = origin.replace(/\s*style='[^']*'/gi, '');
+            }
+            if (oldestSource) {
+                oldestSource = oldestSource.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
+                oldestSource = oldestSource.replace(/\s*style="[^"]*"/gi, '');
+                oldestSource = oldestSource.replace(/\s*style='[^']*'/gi, '');
+            }
+
+            if (origin || oldestSource) {
+                validResults.push({
+                    origin: origin || '',
+                    oldestSource: oldestSource || '',
+                    content: origin || oldestSource
+                });
+            }
         }
 
-        if (!origin && !oldestSource) {
-            // Last resort: get any HTML content but be careful
-            // For safety, let's stick to reliable selectors above. If regex is needed on body text, it's brittle for HTML.
-            // Let's keep the regex fallback weak or remove if it was only text based.
-            // keeping text based fallback as last resort but unlikely to be used if selectors work.
-            const bodyText = $('body').text();
-            const match = bodyText.match(/Kelime Kökeni[:\s]+([^.]+\.)/i);
-            if (match) {
-                origin = match[1].trim();
-            }
-        }
-
-        // Sanitize: Strip <a> tags but keep text
-        if (origin) origin = origin.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
-        if (oldestSource) oldestSource = oldestSource.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
-
-        if (!origin && !oldestSource) {
+        if (validResults.length === 0) {
             return NextResponse.json({ error: 'No etymology content found' }, { status: 404 });
         }
 
+        // Merge results
+        // For EtimolojiTR, we might have Origin AND OldestSource for each variation.
+        // We will join them block by block.
+
+        const mergedOrigin = validResults
+            .map(r => r.origin)
+            .filter(Boolean)
+            .join('<div class="etymology-divider">***</div>');
+
+        const mergedOldestSource = validResults
+            .map(r => r.oldestSource)
+            .filter(Boolean)
+            .join('<div class="etymology-divider">***</div>');
+
         const etimolojiData: EtimolojiTRData = {
-            origin,
-            oldestSource,
-            content: origin || oldestSource,
+            origin: mergedOrigin,
+            oldestSource: mergedOldestSource,
+            content: mergedOrigin || mergedOldestSource,
         };
 
         return NextResponse.json({

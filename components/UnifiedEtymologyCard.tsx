@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Scroll, Book, Globe, AlertCircle } from "lucide-react";
 import { useSensoryFeedback } from "@/hooks/useSensoryFeedback";
 
@@ -54,32 +54,14 @@ interface EtimolojiTRData {
     content?: string;
 }
 
-interface SourceData {
-    nisanyan: {
-        data: NisanyanData | null;
-        loading: boolean;
-        error: boolean;
-    };
-    tdk: {
-        data: TDKData | null;
-        loading: boolean;
-        error: boolean;
-    };
-    aksozluk: {
-        data: AksozlukData | null;
-        loading: boolean;
-        error: boolean;
-    };
-    etimolojitr: {
-        data: EtimolojiTRData | null;
-        loading: boolean;
-        error: boolean;
-    };
+interface SourceState<T> {
+    data: T | null;
+    loading: boolean;
+    error: boolean;
 }
 
 interface UnifiedEtymologyCardProps {
     word: string;
-    sources: SourceData;
 }
 
 const sourceConfig: Record<SourceType, { name: string; icon: typeof Scroll; url: (word: string) => string }> = {
@@ -103,46 +85,28 @@ const sourceConfig: Record<SourceType, { name: string; icon: typeof Scroll; url:
 const sourceOrder: SourceType[] = ["aksozluk", "etimolojitr", "nisanyan"];
 
 // Language-to-color mapping for Contextual Ambience
-// These colors create a subtle, subliminal "feel" based on the word's origin
 const languageAmbience: Record<string, string> = {
-    // Semitic languages - warm amber/earth tones
-    "Ar": "rgba(212, 165, 116, 0.11)",      // Arapça
-    "İbr": "rgba(212, 165, 116, 0.11)",     // İbranice
-
-    // Persian/Indo-Iranian - warm rose/amber
-    "Far": "rgba(205, 133, 133, 0.11)",     // Farsça
-    "Hin": "rgba(205, 133, 133, 0.11)",     // Hintçe
-
-    // Romance languages - lavender/purple
-    "Fr": "rgba(200, 162, 200, 0.11)",      // Fransızca
-    "İt": "rgba(168, 213, 186, 0.11)",      // İtalyanca - soft green
-    "İsp": "rgba(200, 162, 200, 0.11)",     // İspanyolca
-    "Lat": "rgba(200, 162, 200, 0.11)",     // Latince
-    "Por": "rgba(200, 162, 200, 0.11)",     // Portekizce
-
-    // Greek - sky blue
-    "Yun": "rgba(135, 206, 235, 0.11)",     // Yunanca
-    "EYun": "rgba(135, 206, 235, 0.11)",    // Eski Yunanca
-
-    // Turkic languages - turquoise/cyan
-    "ETr": "rgba(64, 224, 208, 0.11)",      // Eski Türkçe
-    "ETr-O": "rgba(64, 224, 208, 0.11)",    // Eski Türkçe (Oğuzca)
-    "TTr": "rgba(64, 224, 208, 0.11)",      // Türkiye Türkçesi
-    "OTr": "rgba(64, 224, 208, 0.11)",      // Osmanlı Türkçesi
-
-    // Germanic/English - cool steel blue
-    "İng": "rgba(176, 196, 222, 0.11)",     // İngilizce
-    "Alm": "rgba(176, 196, 222, 0.11)",     // Almanca
-
-    // Slavic - cool violet
-    "Rus": "rgba(186, 176, 222, 0.11)",     // Rusça
-
-    // Default - subtle gold (matches our theme)
+    "Ar": "rgba(212, 165, 116, 0.11)",
+    "İbr": "rgba(212, 165, 116, 0.11)",
+    "Far": "rgba(205, 133, 133, 0.11)",
+    "Hin": "rgba(205, 133, 133, 0.11)",
+    "Fr": "rgba(200, 162, 200, 0.11)",
+    "İt": "rgba(168, 213, 186, 0.11)",
+    "İsp": "rgba(200, 162, 200, 0.11)",
+    "Lat": "rgba(200, 162, 200, 0.11)",
+    "Por": "rgba(200, 162, 200, 0.11)",
+    "Yun": "rgba(135, 206, 235, 0.11)",
+    "EYun": "rgba(135, 206, 235, 0.11)",
+    "ETr": "rgba(64, 224, 208, 0.11)",
+    "ETr-O": "rgba(64, 224, 208, 0.11)",
+    "TTr": "rgba(64, 224, 208, 0.11)",
+    "OTr": "rgba(64, 224, 208, 0.11)",
+    "İng": "rgba(176, 196, 222, 0.11)",
+    "Alm": "rgba(176, 196, 222, 0.11)",
+    "Rus": "rgba(186, 176, 222, 0.11)",
     "default": "rgba(184, 134, 11, 0.10)"
 };
 
-// Helper function to break long text into paragraphs at ~200 char intervals (at nearest period)
-// Limits to 2 splits max - first 2 paragraphs split, rest stays together
 const formatTextWithParagraphs = (text: string): string[] => {
     if (!text || text.length <= 200) return [text];
 
@@ -151,29 +115,20 @@ const formatTextWithParagraphs = (text: string): string[] => {
     let splits = 0;
     const maxSplits = 2;
 
-    while (remaining.length > 0 && splits < maxSplits) {
-        if (remaining.length <= 200) {
-            paragraphs.push(remaining.trim());
-            remaining = '';
-            break;
-        }
+    while (remaining.length > 200 && splits < maxSplits) {
+        const searchWindow = remaining.substring(150, 400);
+        const periodIndex = searchWindow.indexOf(". ");
 
-        // Find the nearest period after ~180 chars (give some flexibility)
-        const searchStart = 150;
-        const periodIndex = remaining.indexOf('. ', searchStart);
-
-        if (periodIndex !== -1 && periodIndex < 350) {
-            // Found a period - break here (include the period)
-            paragraphs.push(remaining.substring(0, periodIndex + 1).trim());
-            remaining = remaining.substring(periodIndex + 2).trim();
+        if (periodIndex !== -1) {
+            const splitPoint = 150 + periodIndex + 2;
+            paragraphs.push(remaining.substring(0, splitPoint).trim());
+            remaining = remaining.substring(splitPoint).trim();
             splits++;
         } else {
-            // No period found in reasonable range - stop splitting
             break;
         }
     }
 
-    // Add any remaining text as the final paragraph
     if (remaining.trim().length > 0) {
         paragraphs.push(remaining.trim());
     }
@@ -181,97 +136,65 @@ const formatTextWithParagraphs = (text: string): string[] => {
     return paragraphs.filter(p => p.length > 0);
 };
 
-// HTML-aware paragraph formatting: splits HTML content at sentence boundaries
-// while preserving HTML tags. Works by finding ". " in the text content.
+// Helper to clean HTML for Aksözlük
 const formatHtmlWithParagraphs = (html: string): string[] => {
-    if (!html) return [html];
-
-    // Clean up leading whitespace, &nbsp;, and empty tags that could shift drop cap
-    let cleanedHtml = html
-        .replace(/^(\s|&nbsp;|<br\s*\/?>|<span>\s*<\/span>|<em>\s*<\/em>|<strong>\s*<\/strong>)+/gi, '')
-        .trim();
-
-    if (cleanedHtml.length <= 200) return [cleanedHtml];
-
-    const paragraphs: string[] = [];
-    let remaining = cleanedHtml;
-    let splits = 0;
-    const maxSplits = 2;
-
-    while (remaining.length > 0 && splits < maxSplits) {
-        // Get text-only length to check if we need to split
-        const textOnly = remaining.replace(/<[^>]+>/g, '');
-        if (textOnly.length <= 200) {
-            paragraphs.push(remaining.trim());
-            remaining = '';
-            break;
-        }
-
-        // Find ". " in text content, but we need to find it in original HTML
-        // Strategy: Walk through the HTML, track text position, find the split point
-        let textPos = 0;
-        let splitIndex = -1;
-
-        for (let i = 0; i < remaining.length; i++) {
-            if (remaining[i] === '<') {
-                // Skip HTML tag
-                const tagEnd = remaining.indexOf('>', i);
-                if (tagEnd !== -1) {
-                    i = tagEnd;
-                    continue;
-                }
-            }
-
-            textPos++;
-
-            // Look for ". " after ~150 text chars
-            if (textPos >= 150 && remaining.substring(i, i + 2) === '. ') {
-                splitIndex = i + 1; // Include the period
-                break;
-            }
-
-            // Don't search beyond 350 text chars
-            if (textPos > 350) break;
-        }
-
-        if (splitIndex !== -1) {
-            paragraphs.push(remaining.substring(0, splitIndex).trim());
-            remaining = remaining.substring(splitIndex + 1).trim();
-            splits++;
-        } else {
-            // No suitable split found
-            break;
-        }
-    }
-
-    if (remaining.trim().length > 0) {
-        paragraphs.push(remaining.trim());
-    }
-
-    return paragraphs.filter(p => p.length > 0);
+    if (!html) return [];
+    // Simple split by periods for now - the API already handles HTML cleaning
+    const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    return formatTextWithParagraphs(text);
 };
 
 import { useDrag } from "@use-gesture/react";
 import { AnimatePresence, motion } from "framer-motion";
 
-// Helper to extract origin language color from Nişanyan data
 const getOriginLanguageColor = (nisanyanData: NisanyanData | null): string => {
     if (!nisanyanData?.words?.[0]?.etymologies?.[0]?.languages?.[0]) {
         return languageAmbience["default"];
     }
-
     const abbreviation = nisanyanData.words[0].etymologies[0].languages[0].abbreviation;
     return languageAmbience[abbreviation] || languageAmbience["default"];
 };
 
-export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProps) {
+export function UnifiedEtymologyCard({ word }: UnifiedEtymologyCardProps) {
     const [activeTab, setActiveTab] = useState<SourceType>("aksozluk");
     const [direction, setDirection] = useState(0);
     const { triggerFeedback } = useSensoryFeedback();
 
-    const currentSource = sources[activeTab];
+    // Internal state for each source - client-side fetching
+    const [nisanyan, setNisanyan] = useState<SourceState<NisanyanData>>({ data: null, loading: true, error: false });
+    const [aksozluk, setAksozluk] = useState<SourceState<AksozlukData>>({ data: null, loading: true, error: false });
+    const [etimolojitr, setEtimolojitr] = useState<SourceState<EtimolojiTRData>>({ data: null, loading: true, error: false });
 
-    // Get ambience color from Nişanyan origin language (applies to all tabs for consistency)
+    // Fetch all sources on mount - in parallel, independently
+    useEffect(() => {
+        // Aksözlük
+        fetch(`/api/aksozluk?word=${encodeURIComponent(word)}`)
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(j => j.success ? setAksozluk({ data: j.data, loading: false, error: false }) : setAksozluk({ data: null, loading: false, error: true }))
+            .catch(() => setAksozluk({ data: null, loading: false, error: true }));
+
+        // EtimolojiTR
+        fetch(`/api/etimolojitr?word=${encodeURIComponent(word)}`)
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(j => j.success ? setEtimolojitr({ data: j.data, loading: false, error: false }) : setEtimolojitr({ data: null, loading: false, error: true }))
+            .catch(() => setEtimolojitr({ data: null, loading: false, error: true }));
+
+        // Nisanyan
+        fetch(`/api/nisanyan?word=${encodeURIComponent(word)}`)
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(j => j.words?.length ? setNisanyan({ data: j, loading: false, error: false }) : setNisanyan({ data: null, loading: false, error: true }))
+            .catch(() => setNisanyan({ data: null, loading: false, error: true }));
+    }, [word]);
+
+    // Build sources object from internal state
+    const sources = {
+        nisanyan,
+        aksozluk,
+        etimolojitr,
+        tdk: { data: null, loading: false, error: false } // TDK not used in card, only for header definition
+    };
+
+    const currentSource = sources[activeTab];
     const ambienceColor = getOriginLanguageColor(sources.nisanyan.data);
 
     const handleTabClick = (source: SourceType) => {
@@ -286,12 +209,10 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
         }
     };
 
-    // Swipe logic
     const bind = useDrag(({ swipe: [swipeX] }) => {
         const currentIndex = sourceOrder.indexOf(activeTab);
 
         if (swipeX === -1) {
-            // Swipe Left -> Next Tab
             if (currentIndex < sourceOrder.length - 1) {
                 const nextSource = sourceOrder[currentIndex + 1];
                 setDirection(1);
@@ -299,7 +220,6 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
                 setActiveTab(nextSource);
             }
         } else if (swipeX === 1) {
-            // Swipe Right -> Previous Tab
             if (currentIndex > 0) {
                 const prevSource = sourceOrder[currentIndex - 1];
                 setDirection(-1);
@@ -314,7 +234,7 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             zIndex: 1,
             x: 0,
             opacity: 0,
-            scale: 0.98, // Slightly smaller, as if coming from background
+            scale: 0.98,
             filter: "blur(4px)",
         }),
         center: {
@@ -324,7 +244,6 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             scale: 1,
             filter: "blur(0px)",
             transition: {
-                // Slower, overdamped spring for "breathing" effect
                 opacity: { duration: 0.8, ease: "easeOut" },
                 scale: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
                 filter: { duration: 0.6, delay: 0.1 }
@@ -334,7 +253,7 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             zIndex: 0,
             x: 0,
             opacity: 0,
-            scale: 1, // Keep scale static on exit to prevent "falling away" feeling
+            scale: 1,
             filter: "blur(6px)",
             transition: {
                 opacity: { duration: 0.4, ease: "easeOut" },
@@ -348,10 +267,9 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             return (
                 <div className="unified-card__loading" style={{ display: 'block', width: '100%', padding: '0 8px' }}>
                     <div className="skeleton skeleton-text" style={{ width: "90%", marginBottom: "12px" }} />
-                    <div className="skeleton skeleton-text" style={{ width: "98%", marginBottom: "12px" }} />
-                    <div className="skeleton skeleton-text" style={{ width: "95%", marginBottom: "12px" }} />
+                    <div className="skeleton skeleton-text" style={{ width: "75%", marginBottom: "12px" }} />
                     <div className="skeleton skeleton-text" style={{ width: "85%", marginBottom: "12px" }} />
-                    <div className="skeleton skeleton-text" style={{ width: "40%" }} />
+                    <div className="skeleton skeleton-text" style={{ width: "60%" }} />
                 </div>
             );
         }
@@ -386,50 +304,53 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             );
         }
 
-        const wordData = data.words[0];
-        const etymologies = wordData.etymologies || [];
-
-        // Construct the etymology text from structured data
-        let construction = "";
-
-        if (etymologies.length > 0) {
-            etymologies.forEach((etym, index) => {
-                const lang = etym.languages && etym.languages.length > 0 ? etym.languages[0].name : "";
-                const word = etym.romanizedText || etym.originalText || "";
-                const def = etym.definition && etym.definition !== "a.a." ? `"${etym.definition}"` : "";
-                const relation = etym.relation ? etym.relation.text : "";
-
-                // Build sentence part
-                // Example: "Eski Türkçe" + "alma" + "sözcüğünden evrilmiştir."
-                let part = "";
-                if (lang) part += `<span class="etym-lang">${lang}</span> `;
-                if (word) part += `<b>${word}</b> `;
-                if (def) part += `${def} `;
-                if (relation) part += `${relation} `;
-
-                construction += part;
-            });
-        }
-
-        // Basic cleanup of the constructed text
-        const mainText = construction.replace(/\s+/g, " ").trim();
-        const note = wordData.note;
-
         return (
             <div className="tab-content">
                 <div className="etymology-content">
-                    {/* We use a different rendering here because we have HTML tags now, but formatTextWithParagraphs splits by text. 
-                        For now, let's strip tags for valid paragraph splitting or just render safely. 
-                        Actually, let's keep it simple: Render the constructed text as one block or handle it nicely.
-                    */}
-                    <p dangerouslySetInnerHTML={{ __html: mainText }} />
+                    {data.words.map((wordData, wordIndex) => {
+                        const etymologies = wordData.etymologies || [];
+                        let construction = "";
 
-                    {note && (
-                        <div className="etymology-note">
-                            <div className="etymology-note__label">not</div>
-                            <div className="etymology-note__content">{note}</div>
-                        </div>
-                    )}
+                        if (etymologies.length > 0) {
+                            etymologies.forEach((etym) => {
+                                const lang = etym.languages && etym.languages.length > 0 ? etym.languages[0].name : "";
+                                const word = etym.romanizedText || etym.originalText || "";
+                                const def = etym.definition && etym.definition !== "a.a." ? `"${etym.definition}"` : "";
+                                const relation = etym.relation ? etym.relation.text : "";
+
+                                let part = "";
+                                if (lang) part += `<span class="etym-lang">${lang}</span> `;
+                                if (word) part += `<b>${word}</b> `;
+                                if (def) part += `${def} `;
+                                if (relation) part += `${relation} `;
+
+                                construction += part;
+                            });
+                        }
+
+                        const mainText = construction.replace(/\s+/g, " ").trim();
+                        const note = wordData.note;
+
+                        return (
+                            <div key={wordIndex}>
+                                {wordIndex > 0 && (
+                                    <>
+                                        <br /><br />
+                                        <div className="etymology-divider">***</div>
+                                        <br />
+                                    </>
+                                )}
+                                <p dangerouslySetInnerHTML={{ __html: mainText }} />
+
+                                {note && (
+                                    <div className="etymology-note">
+                                        <div className="etymology-note__label">not</div>
+                                        <div className="etymology-note__content">{note}</div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         );
@@ -444,21 +365,18 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             );
         }
 
-        const paragraphs = formatHtmlWithParagraphs(data.content);
-
         return (
             <div className="tab-content">
-                <div className="etymology-content">
-                    {paragraphs.map((p, i) => (
-                        <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
-                    ))}
-                </div>
+                <div className="etymology-content" dangerouslySetInnerHTML={{ __html: data.content }} />
             </div>
         );
     };
 
     const renderEtimolojiTR = (data: EtimolojiTRData) => {
-        if (!data.origin && !data.content) {
+        const content = data.origin || data.content || "";
+        const oldestSource = data.oldestSource;
+
+        if (!content && !oldestSource) {
             return (
                 <div className="unified-card__error">
                     <span>bu kelime için veri bulunamadı</span>
@@ -466,21 +384,15 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
             );
         }
 
-        const mainContent = data.origin || data.content || '';
-        const paragraphs = formatHtmlWithParagraphs(mainContent);
-
         return (
             <div className="tab-content">
                 <div className="etymology-content">
-                    {paragraphs.map((p, i) => (
-                        <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
-                    ))}
-                    {data.oldestSource && (
+                    {content && <div dangerouslySetInnerHTML={{ __html: content }} />}
+
+                    {oldestSource && (
                         <div className="etymology-note">
                             <div className="etymology-note__label">en eski kaynak</div>
-                            <div className="etymology-note__content">
-                                <span dangerouslySetInnerHTML={{ __html: data.oldestSource }} />
-                            </div>
+                            <div className="etymology-note__content" dangerouslySetInnerHTML={{ __html: oldestSource }} />
                         </div>
                     )}
                 </div>
@@ -488,65 +400,73 @@ export function UnifiedEtymologyCard({ word, sources }: UnifiedEtymologyCardProp
         );
     };
 
-
+    // Dynamic padding for card body
+    const padding = 20;
 
     return (
         <div className="unified-card" {...bind()} style={{ touchAction: "pan-y" }}>
+            {/* Subtle Contextual Ambience - based on origin language */}
+            <div
+                className="unified-card__ambience"
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: `radial-gradient(ellipse at top, ${ambienceColor} 0%, transparent 70%)`,
+                    pointerEvents: "none",
+                    borderRadius: "inherit",
+                    opacity: 0.8,
+                    transition: "background 1s ease"
+                }}
+            />
+
             {/* Header with Tabs */}
             <div className="unified-card__header">
                 <nav className="tab-nav" data-active-tab={sourceOrder.indexOf(activeTab)}>
                     {sourceOrder.map((source) => {
-                        const SourceIcon = sourceConfig[source].icon;
-                        const isLoading = sources[source].loading;
-                        const hasError = sources[source].error;
-                        const hasData = !isLoading && !hasError && sources[source].data;
+                        const config = sourceConfig[source];
+                        const Icon = config.icon;
                         const isActive = activeTab === source;
 
                         return (
                             <button
                                 key={source}
-                                className={`tab-item ${isActive ? "active" : ""}`}
+                                className={`tab-item ${isActive ? "tab-item--active" : ""}`}
                                 onClick={() => handleTabClick(source)}
-                                title={isActive ? `${sourceConfig[source].name} - tıkla kaynağa git` : sourceConfig[source].name}
                             >
-                                <SourceIcon
-                                    size={16}
-                                    className="tab-item__icon"
-                                    style={{
-                                        opacity: hasData ? 1 : hasError ? 0.3 : 0.7,
-                                    }}
-                                />
-                                <span className="tab-item__label">
-                                    {source === "nisanyan" ? "Nisanyan" :
-                                        source === "aksozluk" ? "Aksözlük" : "Etimoloji TR"}
-                                </span>
+                                <Icon size={16} className="tab-item__icon" />
+                                <span className="tab-item__label">{config.name}</span>
                             </button>
                         );
                     })}
                 </nav>
             </div>
 
-            {/* Body - Layout Animation with Contextual Ambience */}
+            {/* Card Body with Content */}
             <motion.div
-                className="unified-card__body"
                 layout
+                key={activeTab}
+                className="unified-card__body"
                 style={{
-                    position: 'relative',
-                    overflow: 'hidden',
-                    background: `radial-gradient(ellipse at center, ${ambienceColor}, transparent 70%)`
+                    padding: `${padding}px ${padding}px ${padding}px ${padding}px`,
+                    boxSizing: "border-box",
                 }}
                 transition={{
-                    layout: { duration: 0.9, ease: [0.22, 1, 0.36, 1] }
+                    duration: 0.9,
+                    ease: [0.22, 1, 0.36, 1],
                 }}
             >
-                <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                <AnimatePresence initial={false} custom={direction}>
                     <motion.div
                         key={activeTab}
-                        custom={direction}
                         variants={variants}
+                        custom={direction}
                         initial="enter"
                         animate="center"
                         exit="exit"
+                        className="tab-content"
                     >
                         {renderContent()}
                     </motion.div>
